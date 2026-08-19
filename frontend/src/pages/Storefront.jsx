@@ -6,6 +6,7 @@ import { useStore } from "@/context/StoreContext";
 import { useCart } from "@/context/CartContext";
 import { Input } from "@/components/ui/input";
 import { Search, ShoppingBag } from "lucide-react";
+import { getTemplateSkin } from "@/lib/templates";
 
 import StoreHeader from "@/components/storefront/StoreHeader";
 import StoreFooter from "@/components/storefront/StoreFooter";
@@ -22,6 +23,8 @@ export default function Storefront() {
   useEffect(() => {
     if (slug) loadShop(slug);
   }, [slug]);
+
+  const skin = getTemplateSkin(shop?.templateId, shop?.theme);
 
   const categories = ["All", ...new Set(menu.map((m) => m.category))];
   const filtered = menu.filter(
@@ -52,44 +55,63 @@ export default function Storefront() {
   const Template = TEMPLATE_COMPONENTS[shop?.templateId] || TEMPLATE_COMPONENTS.classic;
 
   return (
-    <div className="pb-24">
-      <StoreHeader shop={shop} theme={shop?.theme} />
+    <div
+      style={{ background: skin.pageBg, color: skin.text, fontFamily: skin.font }}
+      className="min-h-screen pb-24"
+    >
+      <StoreHeader shop={shop} theme={shop?.theme} templateId={shop?.templateId} />
 
-      {/* Search + category filter bar */}
+      {/* Search bar — themed to the store's own template, always shown since
+          none of the individual templates ship their own search. */}
       <motion.div
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4, delay: 0.15, ease: "easeOut" }}
-        className="p-4 sticky top-0 bg-background/90 backdrop-blur-md z-10 border-b"
+        style={{
+          background: skin.surfaceStrong,
+          borderBottom: `1px solid ${skin.border}`,
+        }}
+        className="sticky top-0 z-10 p-4 backdrop-blur-md"
       >
         <div className="relative">
-          <Search className="absolute left-3 top-2.5 w-4 h-4 text-muted-foreground" />
+          <Search className="absolute left-3 top-2.5 w-4 h-4" style={{ color: skin.muted }} />
           <Input
             placeholder="Search for items..."
-            className="pl-9 transition-shadow focus-visible:shadow-md"
+            className="pl-9 border-0 shadow-none transition-shadow focus-visible:shadow-md"
+            style={{ background: skin.surface, color: skin.text }}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
         </div>
-        <div className="flex gap-2 mt-3 overflow-x-auto pb-1">
-          {categories.map((c, i) => (
-            <motion.button
-              key={c}
-              initial={{ opacity: 0, y: 6 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3, delay: 0.05 * i }}
-              whileTap={{ scale: 0.94 }}
-              onClick={() => setCategory(c)}
-              className={`px-3 py-1 rounded-full text-sm whitespace-nowrap transition-colors ${
-                category === c
-                  ? "bg-primary text-primary-foreground shadow-sm"
-                  : "bg-secondary hover:opacity-80"
-              }`}
-            >
-              {c}
-            </motion.button>
-          ))}
-        </div>
+
+        {/* Category chips — only shown for templates that don't already
+            render their own category navigation, so we never stack two
+            differently-styled nav bars on top of each other. */}
+        {!skin.hasOwnCategoryNav && (
+          <div className="flex gap-2 mt-3 overflow-x-auto pb-1">
+            {categories.map((c, i) => {
+              const active = category === c;
+              return (
+                <motion.button
+                  key={c}
+                  initial={{ opacity: 0, y: 6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3, delay: 0.05 * i }}
+                  whileTap={{ scale: 0.94 }}
+                  onClick={() => setCategory(c)}
+                  className="px-3 py-1 rounded-full text-sm whitespace-nowrap font-medium transition-colors"
+                  style={
+                    active
+                      ? { background: skin.accent, color: skin.accentText }
+                      : { background: skin.surface, color: skin.text, border: `1px solid ${skin.border}` }
+                  }
+                >
+                  {c}
+                </motion.button>
+              );
+            })}
+          </div>
+        )}
       </motion.div>
 
       {/* Template-specific rendering — fades in regardless of which template is active */}
@@ -104,7 +126,7 @@ export default function Storefront() {
         </motion.div>
       </AnimatePresence>
 
-      <StoreFooter shop={shop} theme={shop?.theme} />
+      <StoreFooter shop={shop} theme={shop?.theme} templateId={shop?.templateId} />
 
       <AnimatePresence>
         {count > 0 && (
@@ -115,7 +137,8 @@ export default function Storefront() {
             transition={{ type: "spring", stiffness: 300, damping: 26 }}
             whileTap={{ scale: 0.97 }}
             onClick={() => navigate(`/store/${slug}/checkout`)}
-            className="fixed bottom-0 left-0 right-0 p-4 bg-primary text-primary-foreground flex justify-between items-center shadow-[0_-4px_16px_rgba(0,0,0,0.12)]"
+            style={{ background: skin.accent, color: skin.accentText }}
+            className="fixed bottom-0 left-0 right-0 p-4 flex justify-between items-center shadow-[0_-4px_16px_rgba(0,0,0,0.18)]"
           >
             <span className="flex items-center gap-2">
               <ShoppingBag className="w-4 h-4" />
