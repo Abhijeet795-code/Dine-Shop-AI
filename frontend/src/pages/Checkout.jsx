@@ -1,13 +1,14 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
+import { motion, AnimatePresence } from "framer-motion";
 import { useCart } from "@/context/CartContext";
 import { useStore } from "@/context/StoreContext";
 import api, { apiError } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Minus, Plus, Trash2, Loader2 } from "lucide-react";
+import { Minus, Plus, Trash2, Loader2, ShoppingBag, ShieldCheck } from "lucide-react";
 
 export default function Checkout() {
   const { items, updateQty, removeItem, total } = useCart();
@@ -114,44 +115,104 @@ export default function Checkout() {
   };
 
   if (items.length === 0) {
-    return <div className="p-8 text-center text-muted-foreground">Your cart is empty.</div>;
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4 }}
+        className="flex h-[60vh] flex-col items-center justify-center gap-2 p-8 text-center text-muted-foreground"
+      >
+        <ShoppingBag className="h-8 w-8 opacity-40" />
+        Your cart is empty.
+      </motion.div>
+    );
   }
 
   return (
-    <div className="max-w-md mx-auto p-4 pb-32">
-      <h1 className="text-lg font-bold mb-4">Your Order</h1>
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.35 }}
+      className="max-w-md mx-auto p-4 pb-32"
+    >
+      <motion.h1
+        initial={{ opacity: 0, y: -8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4 }}
+        className="text-lg font-bold mb-4"
+      >
+        Your Order
+      </motion.h1>
 
       <div className="space-y-3 mb-6">
-        {items.map((item) => (
-          <div key={item.id} className="flex justify-between items-center border-b pb-3">
-            <div>
-              <p className="font-medium text-sm">{item.name}</p>
-              <p className="text-xs text-muted-foreground">₹{item.price} each</p>
-            </div>
-            <div className="flex items-center gap-2">
-              <button onClick={() => updateQty(item.id, item.qty - 1)} className="border rounded-full p-1">
-                <Minus className="w-3 h-3" />
-              </button>
-              <span className="text-sm w-4 text-center">{item.qty}</span>
-              <button onClick={() => updateQty(item.id, item.qty + 1)} className="border rounded-full p-1">
-                <Plus className="w-3 h-3" />
-              </button>
-              <button onClick={() => removeItem(item.id)} className="text-red-500 ml-1">
-                <Trash2 className="w-4 h-4" />
-              </button>
-            </div>
-          </div>
-        ))}
+        <AnimatePresence initial={false}>
+          {items.map((item, i) => (
+            <motion.div
+              key={item.id}
+              layout
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, x: -24, height: 0 }}
+              transition={{ duration: 0.3, delay: i * 0.04 }}
+              className="flex justify-between items-center border-b pb-3"
+            >
+              <div>
+                <p className="font-medium text-sm">{item.name}</p>
+                <p className="text-xs text-muted-foreground">₹{item.price} each</p>
+              </div>
+              <div className="flex items-center gap-2">
+                <motion.button
+                  whileTap={{ scale: 0.85 }}
+                  onClick={() => updateQty(item.id, item.qty - 1)}
+                  className="border rounded-full p-1 transition-colors hover:bg-muted"
+                >
+                  <Minus className="w-3 h-3" />
+                </motion.button>
+                <motion.span
+                  key={item.qty}
+                  initial={{ scale: 1.3 }}
+                  animate={{ scale: 1 }}
+                  transition={{ duration: 0.2 }}
+                  className="text-sm w-4 text-center"
+                >
+                  {item.qty}
+                </motion.span>
+                <motion.button
+                  whileTap={{ scale: 0.85 }}
+                  onClick={() => updateQty(item.id, item.qty + 1)}
+                  className="border rounded-full p-1 transition-colors hover:bg-muted"
+                >
+                  <Plus className="w-3 h-3" />
+                </motion.button>
+                <motion.button
+                  whileTap={{ scale: 0.85 }}
+                  onClick={() => removeItem(item.id)}
+                  className="text-red-500 ml-1"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </motion.button>
+              </div>
+            </motion.div>
+          ))}
+        </AnimatePresence>
       </div>
 
       {/* Bill summary */}
-      <div className="bg-card border rounded-lg p-4 mb-6 space-y-1 text-sm">
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, delay: 0.1 }}
+        className="bg-card border rounded-lg p-4 mb-6 space-y-1 text-sm shadow-sm"
+      >
         <div className="flex justify-between"><span>Subtotal</span><span>₹{total}</span></div>
         <div className="flex justify-between text-muted-foreground"><span>Tax (5%)</span><span>₹{tax}</span></div>
         <div className="flex justify-between font-bold text-base border-t pt-2 mt-2">
-          <span>Total</span><span>₹{grandTotal}</span>
+          <span>Total</span>
+          <motion.span key={grandTotal} initial={{ scale: 1.15 }} animate={{ scale: 1 }} transition={{ duration: 0.25 }}>
+            ₹{grandTotal}
+          </motion.span>
         </div>
-      </div>
+      </motion.div>
 
       {!paymentEnabled && (
         <div className="bg-muted border rounded-lg p-3 mb-6 text-xs text-muted-foreground">
@@ -160,7 +221,12 @@ export default function Checkout() {
       )}
 
       {/* Customer details */}
-      <div className="space-y-3 mb-6">
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, delay: 0.18 }}
+        className="space-y-3 mb-6"
+      >
         <div>
           <Label>Your Name</Label>
           <Input value={customerName} onChange={(e) => setCustomerName(e.target.value)} />
@@ -169,10 +235,19 @@ export default function Checkout() {
           <Label>Phone Number</Label>
           <Input value={customerPhone} onChange={(e) => setCustomerPhone(e.target.value)} placeholder="For order updates" required />
         </div>
-      </div>
+        <p className="flex items-center gap-1.5 text-[11px] text-muted-foreground pt-1">
+          <ShieldCheck className="w-3.5 h-3.5" />
+          Secure payment powered by Razorpay
+        </p>
+      </motion.div>
 
-      <div className="fixed bottom-0 left-0 right-0 p-4 bg-background border-t">
-        <Button onClick={handlePayment} disabled={placing} className="w-full" size="lg">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ type: "spring", stiffness: 300, damping: 28, delay: 0.2 }}
+        className="fixed bottom-0 left-0 right-0 p-4 bg-background/95 backdrop-blur-md border-t shadow-[0_-4px_16px_rgba(0,0,0,0.08)]"
+      >
+        <Button onClick={handlePayment} disabled={placing} className="w-full transition-transform active:scale-[0.98]" size="lg">
           {placing ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
           {placing
             ? "Processing..."
@@ -180,7 +255,7 @@ export default function Checkout() {
             ? `Pay ₹${grandTotal}`
             : `Place Order · ₹${grandTotal}`}
         </Button>
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 }
