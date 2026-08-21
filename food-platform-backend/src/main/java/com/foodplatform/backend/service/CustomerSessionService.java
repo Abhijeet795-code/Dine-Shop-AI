@@ -34,7 +34,7 @@ public class CustomerSessionService {
 
         Customer customer = null;
         if (request.customerPhone() != null && !request.customerPhone().isBlank()) {
-            customer = customerRepository.findByPhone(request.customerPhone())
+            customer = customerRepository.findFirstByPhoneOrderByCreatedAtAsc(request.customerPhone())
                     .orElseGet(() -> customerRepository.save(
                             Customer.builder()
                                     .name(request.customerName())
