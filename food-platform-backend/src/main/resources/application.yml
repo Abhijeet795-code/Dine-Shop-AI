@@ -13,6 +13,15 @@ spring:
     hikari:
       maximum-pool-size: 10
       minimum-idle: 2
+      # Render's free-tier Postgres/network silently drops connections that sit idle
+      # for a few minutes. Without these, a stale pooled connection gets handed to
+      # a query and fails with a raw SQLException -> falls through to the generic
+      # 500 handler. Retiring connections before that happens (and pinging idle
+      # ones) avoids the intermittent "first request after idle fails" 500s.
+      max-lifetime: 240000        # retire connections after 4 min, well under Render's idle cutoff
+      keepalive-time: 120000      # ping idle connections every 2 min to keep them alive
+      connection-timeout: 20000   # fail fast (20s) instead of hanging if the DB is truly unreachable
+      validation-timeout: 5000
 
   jpa:
     hibernate:
