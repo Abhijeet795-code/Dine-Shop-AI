@@ -99,10 +99,10 @@ public class OrderService {
 
         // Data ingestion is implicit (the order/order_item rows themselves);
         // deduct inventory immediately so stock levels and low-stock alerts stay accurate.
-        for (OrderItem oi : order.getItems()) {
-            inventoryService.deductForSale(oi.getMenuItem().getItemId(),
-                    BigDecimal.valueOf(oi.getQuantity()), order.getOrderId());
-        }
+        // for (OrderItem oi : order.getItems()) {
+        //     inventoryService.deductForSale(oi.getMenuItem().getItemId(),
+        //             BigDecimal.valueOf(oi.getQuantity()), order.getOrderId());
+        // }
 
         return OrderResponse.from(order);
     }
