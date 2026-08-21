@@ -4,6 +4,8 @@ import ClassicTemplate from "@/components/storefront-templates/ClassicTemplate";
 import GridTemplate from "@/components/storefront-templates/GridTemplate";
 import MinimalTemplate from "@/components/storefront-templates/MinimalTemplate";
 import VibrantTemplate from "@/components/storefront-templates/VibrantTemplate";
+import { KitchenSidebarGreen, KitchenSidebarRed } from "@/components/storefront-templates/KitchenSidebarTemplate";
+import FlavoroTemplate from "@/components/storefront-templates/FlavoroTemplate";
 
 // Shared registry so Storefront.jsx (real customers) and StoreCustomization.jsx
 // (admin preview) always render the exact same template components — no drift.
@@ -14,6 +16,9 @@ export const TEMPLATE_COMPONENTS = {
   grid: GridTemplate,
   minimal: MinimalTemplate,
   vibrant: VibrantTemplate,
+  "kitchen-sidebar": KitchenSidebarGreen,
+  flavoro: FlavoroTemplate,
+  "kitchen-red": KitchenSidebarRed,
 };
 
 // Sample menu used only for the admin's live preview, so the layout is

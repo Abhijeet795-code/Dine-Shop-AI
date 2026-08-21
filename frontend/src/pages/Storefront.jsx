@@ -16,7 +16,7 @@ export default function Storefront() {
   const { slug } = useParams();
   const navigate = useNavigate();
   const { shop, menu, loading, loadShop } = useStore();
-  const { addItem, count, total } = useCart();
+  const { items: cartItems, addItem, updateQty, removeItem, count, total } = useCart();
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("All");
 
@@ -38,6 +38,8 @@ export default function Storefront() {
     toast.success(`${item.name} added to cart`);
   };
 
+  const goToCheckout = () => navigate(`/store/${slug}/checkout`);
+
   if (loading) {
     return (
       <div className="flex h-[60vh] items-center justify-center">
@@ -54,65 +56,75 @@ export default function Storefront() {
 
   const Template = TEMPLATE_COMPONENTS[shop?.templateId] || TEMPLATE_COMPONENTS.classic;
 
+  // Templates with hasOwnSearch (the desktop-style layouts) render their own
+  // search box + category chips inline, matching their own design — so we
+  // skip the generic bar entirely instead of stacking two differently
+  // styled bars on top of each other. They get live search/category state
+  // and the real cart passed as props instead.
+  const showGenericBar = !skin.hasOwnSearch;
+  const showGenericHeader = !skin.hasOwnHeader;
+
   return (
     <div
       style={{ background: skin.pageBg, color: skin.text, fontFamily: skin.font }}
       className="min-h-screen pb-24"
     >
-      <StoreHeader shop={shop} theme={shop?.theme} templateId={shop?.templateId} />
+      {showGenericHeader && (
+        <StoreHeader shop={shop} theme={shop?.theme} templateId={shop?.templateId} />
+      )}
 
-      {/* Search bar — themed to the store's own template, always shown since
-          none of the individual templates ship their own search. */}
-      <motion.div
-        initial={{ opacity: 0, y: -10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4, delay: 0.15, ease: "easeOut" }}
-        style={{
-          background: skin.surfaceStrong,
-          borderBottom: `1px solid ${skin.border}`,
-        }}
-        className="sticky top-0 z-10 p-4 backdrop-blur-md"
-      >
-        <div className="relative">
-          <Search className="absolute left-3 top-2.5 w-4 h-4" style={{ color: skin.muted }} />
-          <Input
-            placeholder="Search for items..."
-            className="pl-9 border-0 shadow-none transition-shadow focus-visible:shadow-md"
-            style={{ background: skin.surface, color: skin.text }}
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
-        </div>
-
-        {/* Category chips — only shown for templates that don't already
-            render their own category navigation, so we never stack two
-            differently-styled nav bars on top of each other. */}
-        {!skin.hasOwnCategoryNav && (
-          <div className="flex gap-2 mt-3 overflow-x-auto pb-1">
-            {categories.map((c, i) => {
-              const active = category === c;
-              return (
-                <motion.button
-                  key={c}
-                  initial={{ opacity: 0, y: 6 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.3, delay: 0.05 * i }}
-                  whileTap={{ scale: 0.94 }}
-                  onClick={() => setCategory(c)}
-                  className="px-3 py-1 rounded-full text-sm whitespace-nowrap font-medium transition-colors"
-                  style={
-                    active
-                      ? { background: skin.accent, color: skin.accentText }
-                      : { background: skin.surface, color: skin.text, border: `1px solid ${skin.border}` }
-                  }
-                >
-                  {c}
-                </motion.button>
-              );
-            })}
+      {showGenericBar && (
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.15, ease: "easeOut" }}
+          style={{
+            background: skin.surfaceStrong,
+            borderBottom: `1px solid ${skin.border}`,
+          }}
+          className="sticky top-0 z-10 p-4 backdrop-blur-md"
+        >
+          <div className="relative">
+            <Search className="absolute left-3 top-2.5 w-4 h-4" style={{ color: skin.muted }} />
+            <Input
+              placeholder="Search for items..."
+              className="pl-9 border-0 shadow-none transition-shadow focus-visible:shadow-md"
+              style={{ background: skin.surface, color: skin.text }}
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
           </div>
-        )}
-      </motion.div>
+
+          {/* Category chips — only shown for templates that don't already
+              render their own category navigation, so we never stack two
+              differently-styled nav bars on top of each other. */}
+          {!skin.hasOwnCategoryNav && (
+            <div className="flex gap-2 mt-3 overflow-x-auto pb-1">
+              {categories.map((c, i) => {
+                const active = category === c;
+                return (
+                  <motion.button
+                    key={c}
+                    initial={{ opacity: 0, y: 6 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.3, delay: 0.05 * i }}
+                    whileTap={{ scale: 0.94 }}
+                    onClick={() => setCategory(c)}
+                    className="px-3 py-1 rounded-full text-sm whitespace-nowrap font-medium transition-colors"
+                    style={
+                      active
+                        ? { background: skin.accent, color: skin.accentText }
+                        : { background: skin.surface, color: skin.text, border: `1px solid ${skin.border}` }
+                    }
+                  >
+                    {c}
+                  </motion.button>
+                );
+              })}
+            </div>
+          )}
+        </motion.div>
+      )}
 
       {/* Template-specific rendering — fades in regardless of which template is active */}
       <AnimatePresence mode="wait">
@@ -122,12 +134,27 @@ export default function Storefront() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.45, ease: "easeOut" }}
         >
-          <Template shop={shop} items={filtered} onAdd={handleAdd} theme={shop?.theme} />
+          <Template
+            shop={shop}
+            items={filtered}
+            onAdd={handleAdd}
+            theme={shop?.theme}
+            search={search}
+            setSearch={setSearch}
+            category={category}
+            setCategory={setCategory}
+            categories={categories}
+            cart={{ items: cartItems, count, total, updateQty, removeItem }}
+            onCheckout={goToCheckout}
+          />
         </motion.div>
       </AnimatePresence>
 
       <StoreFooter shop={shop} theme={shop?.theme} templateId={shop?.templateId} />
 
+      {/* Floating "view cart" bar — for templates with their own inline
+          order panel (desktop), this only shows up on mobile, since the
+          panel already handles checkout on larger screens. */}
       <AnimatePresence>
         {count > 0 && (
           <motion.button
@@ -136,9 +163,11 @@ export default function Storefront() {
             exit={{ opacity: 0, y: 60 }}
             transition={{ type: "spring", stiffness: 300, damping: 26 }}
             whileTap={{ scale: 0.97 }}
-            onClick={() => navigate(`/store/${slug}/checkout`)}
+            onClick={goToCheckout}
             style={{ background: skin.accent, color: skin.accentText }}
-            className="fixed bottom-0 left-0 right-0 p-4 flex justify-between items-center shadow-[0_-4px_16px_rgba(0,0,0,0.18)]"
+            className={`fixed bottom-0 left-0 right-0 p-4 flex justify-between items-center shadow-[0_-4px_16px_rgba(0,0,0,0.18)] ${
+              skin.hasOwnCart ? "lg:hidden" : ""
+            }`}
           >
             <span className="flex items-center gap-2">
               <ShoppingBag className="w-4 h-4" />

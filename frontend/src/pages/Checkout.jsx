@@ -10,6 +10,29 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Minus, Plus, Trash2, Loader2, ShoppingBag, ShieldCheck } from "lucide-react";
 import { getTemplateSkin } from "@/lib/templates";
+import { computeBill } from "@/lib/billing";
+
+// Razorpay's checkout.js used to be loaded on EVERY page via a blocking
+// <script> tag in index.html — that delayed first paint (including the
+// Login page) on every visit. Instead we lazy-load it only when someone
+// actually reaches payment, and cache the promise so repeat checkouts
+// don't refetch it.
+let razorpayScriptPromise = null;
+const loadRazorpayScript = () => {
+  if (window.Razorpay) return Promise.resolve();
+  if (razorpayScriptPromise) return razorpayScriptPromise;
+  razorpayScriptPromise = new Promise((resolve, reject) => {
+    const script = document.createElement("script");
+    script.src = "https://checkout.razorpay.com/v1/checkout.js";
+    script.onload = resolve;
+    script.onerror = () => {
+      razorpayScriptPromise = null;
+      reject(new Error("Could not load payment gateway. Check your connection."));
+    };
+    document.body.appendChild(script);
+  });
+  return razorpayScriptPromise;
+};
 
 export default function Checkout() {
   const { items, updateQty, removeItem, total } = useCart();
@@ -21,9 +44,12 @@ export default function Checkout() {
 
   const skin = getTemplateSkin(shop?.templateId, shop?.theme);
 
-  const taxRate = 0.05; // adjust as needed
-  const tax = Math.round(total * taxRate);
-  const grandTotal = total + tax;
+  // Same calculation used by the "Your Order" panel on the new desktop
+  // templates, so a customer never sees a different total there than what
+  // they're actually charged here.
+  const bill = computeBill(total);
+  const tax = bill.tax;
+  const grandTotal = bill.total;
 
   const handlePayment = async () => {
     if (!customerPhone) {
@@ -67,6 +93,7 @@ export default function Checkout() {
       }
 
       // Step C: open Razorpay checkout
+      await loadRazorpayScript();
       const options = {
         key: paymentRes.data.razorpayKeyId,
         amount: paymentRes.data.amount,
