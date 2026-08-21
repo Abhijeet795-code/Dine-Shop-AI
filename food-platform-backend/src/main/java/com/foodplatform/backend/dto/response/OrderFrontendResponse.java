@@ -28,7 +28,12 @@ public record OrderFrontendResponse(
     }
 
     public static OrderFrontendResponse from(Order o) {
-        long minutesAgo = Duration.between(o.getOrderTimestamp(), LocalDateTime.now()).toMinutes();
+        // orderTimestamp is a @CreationTimestamp field: it's only guaranteed to be
+        // populated after Hibernate has flushed the INSERT. Guard against it still
+        // being null instead of letting Duration.between throw a NullPointerException.
+        long minutesAgo = o.getOrderTimestamp() == null
+                ? 0
+                : Duration.between(o.getOrderTimestamp(), LocalDateTime.now()).toMinutes();
         return new OrderFrontendResponse(
                 o.getOrderId(),
                 o.getOrderStatus().name(),

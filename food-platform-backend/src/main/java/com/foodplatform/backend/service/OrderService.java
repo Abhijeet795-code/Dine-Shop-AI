@@ -163,7 +163,11 @@ public class OrderService {
         order.setDiscount(BigDecimal.ZERO);
         order.setTotalAmount(subtotal.add(tax));
 
-        order = orderRepository.save(order);
+        // saveAndFlush (not save) so Hibernate actually executes the INSERT now and
+        // populates the @CreationTimestamp orderTimestamp field in memory. save()
+        // alone only queues the insert - reading orderTimestamp before the next
+        // flush can see it as null, which NPEs in OrderFrontendResponse.from below.
+        order = orderRepository.saveAndFlush(order);
 
         for (OrderItem oi : order.getItems()) {
             inventoryService.deductForSale(oi.getMenuItem().getItemId(),
