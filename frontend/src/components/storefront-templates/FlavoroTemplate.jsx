@@ -75,8 +75,8 @@ export default function FlavoroTemplate({
 
   return (
     <div style={{ fontFamily: theme?.font, background: "#FFF8F0" }} className="min-h-screen text-[#18181B]">
-      {/* Top nav */}
-      <div className="flex items-center justify-between border-b border-black/5 bg-white px-4 py-3 lg:px-8">
+      {/* Top nav — pinned so it stays reachable while the page scrolls */}
+      <div className="sticky top-0 z-30 flex items-center justify-between border-b border-black/5 bg-white/90 px-4 py-3 backdrop-blur-md lg:px-8">
         <div className="flex items-center gap-2">
           <ChefHat className="h-5 w-5" style={{ color: accent }} />
           <span className="text-sm font-bold">{shop?.name || "Your Shop"}</span>
@@ -164,7 +164,7 @@ export default function FlavoroTemplate({
         )}
       </AnimatePresence>
 
-      <div className="lg:flex">
+      <div className="lg:flex lg:items-start">
         <div className="min-w-0 flex-1">
           {/* Hero */}
           <div className="px-4 pt-5 lg:px-8">
@@ -250,17 +250,15 @@ export default function FlavoroTemplate({
           </div>
         </div>
 
-        {/* Desktop order panel */}
-        <aside className="hidden w-80 shrink-0 border-l border-black/5 p-5 lg:block">
-          <div className="sticky top-5">
-            <OrderPanel
-              cart={cart}
-              accent={accent}
-              accentText="#1C1410"
-              onCheckout={onCheckout}
-              showPaymentMethods
-            />
-          </div>
+        {/* Desktop order panel — pinned just below the sticky top nav */}
+        <aside className="hidden w-80 shrink-0 border-l border-black/5 p-5 lg:block lg:sticky lg:top-[70px] lg:max-h-[calc(100vh-70px)] lg:overflow-y-auto">
+          <OrderPanel
+            cart={cart}
+            accent={accent}
+            accentText="#1C1410"
+            onCheckout={onCheckout}
+            showPaymentMethods
+          />
         </aside>
       </div>
     </div>

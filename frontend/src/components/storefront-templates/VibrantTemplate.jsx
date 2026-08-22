@@ -25,7 +25,7 @@ export default function VibrantTemplate({ items, onAdd, theme }) {
       style={{ fontFamily: theme?.font, background: "#1C1917" }}
       className="min-h-screen text-white"
     >
-      <div className="flex gap-2 overflow-x-auto px-4 py-3">
+      <div className="sticky top-0 z-10 flex gap-2 overflow-x-auto bg-[#1C1917]/95 px-4 py-3 backdrop-blur-md">
         {groups.map(([category]) => (
           <button
             key={category}

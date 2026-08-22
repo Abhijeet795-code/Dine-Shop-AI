@@ -123,10 +123,11 @@ function KitchenSidebarBase({
   );
 
   return (
-    <div style={{ fontFamily: theme?.font, background: "#FBF7EF" }} className="min-h-screen text-[#18181B] lg:flex">
-      {/* Desktop sidebar */}
+    <div style={{ fontFamily: theme?.font, background: "#FBF7EF" }} className="min-h-screen text-[#18181B] lg:flex lg:items-start">
+      {/* Desktop sidebar — pinned to the viewport while the menu column
+          scrolls past it, like the reference design. */}
       <aside
-        className="hidden lg:flex w-60 shrink-0 flex-col justify-between p-5"
+        className="hidden lg:flex w-60 shrink-0 flex-col justify-between p-5 lg:sticky lg:top-0 lg:h-screen lg:overflow-y-auto"
         style={{ background: v.sidebarBg, color: "#F3EFE6" }}
       >
         <div>
@@ -154,8 +155,11 @@ function KitchenSidebarBase({
         </div>
       </aside>
 
-      {/* Mobile top bar */}
-      <div className="flex items-center justify-between px-4 py-3 lg:hidden" style={{ background: v.sidebarBg, color: "#F3EFE6" }}>
+      {/* Mobile top bar — pinned so nav is always reachable while scrolling */}
+      <div
+        className="sticky top-0 z-30 flex items-center justify-between px-4 py-3 lg:hidden"
+        style={{ background: v.sidebarBg, color: "#F3EFE6" }}
+      >
         <button onClick={() => setDrawerOpen(true)}>
           <MenuIcon className="h-5 w-5" />
         </button>
@@ -197,8 +201,12 @@ function KitchenSidebarBase({
 
       {/* Main content */}
       <div className="min-w-0 flex-1">
-        {/* Desktop utility bar */}
-        <div className="hidden items-center justify-between gap-4 border-b border-black/5 px-8 py-4 lg:flex">
+        {/* Desktop utility bar — sticky so search stays reachable while
+            the menu grid scrolls underneath it */}
+        <div
+          className="sticky top-0 z-20 hidden items-center justify-between gap-4 border-b border-black/5 px-8 py-4 backdrop-blur-md lg:flex"
+          style={{ background: "#FBF7EFEE" }}
+        >
           {theme?.contactAddress ? (
             <div className="flex items-center gap-1.5 text-sm text-gray-500">
               <MapPin className="h-4 w-4" />
@@ -304,11 +312,9 @@ function KitchenSidebarBase({
         </div>
       </div>
 
-      {/* Desktop order panel */}
-      <aside className="hidden w-80 shrink-0 border-l border-black/5 p-5 lg:block">
-        <div className="sticky top-5">
-          <OrderPanel cart={cart} accent={accent} accentText={accentText} onCheckout={onCheckout} />
-        </div>
+      {/* Desktop order panel — pinned alongside the scrolling menu */}
+      <aside className="hidden w-80 shrink-0 border-l border-black/5 p-5 lg:block lg:sticky lg:top-0 lg:h-screen lg:overflow-y-auto">
+        <OrderPanel cart={cart} accent={accent} accentText={accentText} onCheckout={onCheckout} />
       </aside>
     </div>
   );
