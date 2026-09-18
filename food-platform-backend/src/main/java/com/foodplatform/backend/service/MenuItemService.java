@@ -160,14 +160,20 @@ public class MenuItemService {
         return MenuItemFrontendResponse.from(menuItemRepository.save(item));
     }
 
-    /** Finds an existing category by name (case-insensitive) for this shop, or creates one. */
+            /** Finds an existing category by name (case-insensitive) for this shop, or creates one.
+     *  Uses a list lookup (not a single-result query) because older data may contain
+     *  duplicate case-variant category names for the same shop; we just take the first. */
     private Category resolveCategory(Shop shop, String categoryName) {
         if (categoryName == null || categoryName.isBlank()) return null;
-        return categoryRepository.findByShop_ShopIdAndCategoryNameIgnoreCase(shop.getShopId(), categoryName.trim())
-                .orElseGet(() -> categoryRepository.save(Category.builder()
-                        .shop(shop)
-                        .categoryName(categoryName.trim())
-                        .isActive(true)
-                        .build()));
+        List<Category> matches = categoryRepository.findAllByShop_ShopIdAndCategoryNameIgnoreCase(
+                shop.getShopId(), categoryName.trim());
+        if (!matches.isEmpty()) {
+            return matches.get(0);
+        }
+        return categoryRepository.save(Category.builder()
+                .shop(shop)
+                .categoryName(categoryName.trim())
+                .isActive(true)
+                .build());
     }
 }
