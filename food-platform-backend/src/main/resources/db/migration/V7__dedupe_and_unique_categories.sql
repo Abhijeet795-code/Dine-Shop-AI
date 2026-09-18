@@ -49,5 +49,5 @@ WITH ranked AS (
 DELETE FROM categories
 WHERE category_id IN (SELECT category_id FROM ranked WHERE rn > 1);
 
-CREATE UNIQUE INDEX uq_categories_shop_id_name_lower
+CREATE UNIQUE INDEX IF NOT EXISTS uq_categories_shop_id_name_lower
     ON categories (shop_id, lower(category_name));
